@@ -13,33 +13,45 @@ class Order extends Model
         'status'
     ];
 
-    // thuộc về staff
+    /*
+    |--------------------------------------------------------------------------
+    | RELATIONSHIPS
+    |--------------------------------------------------------------------------
+    */
+
+    // Nhân viên tạo đơn
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    // thuộc về bàn
+    // Bàn
     public function table()
     {
         return $this->belongsTo(Table::class);
     }
 
-    // có nhiều item
+    // Danh sách món
     public function items()
     {
         return $this->hasMany(OrderItem::class);
     }
 
-    // có 1 thanh toán
+    // Thanh toán
     public function payment()
     {
         return $this->hasOne(Payment::class);
     }
 
-    // có thể có giao hàng
+    // Giao hàng (nếu có)
     public function delivery()
     {
         return $this->hasOne(Delivery::class);
+    }
+
+    // ❗ Quan trọng: Lý do huỷ
+    public function cancelled()
+    {
+        return $this->hasOne(CancelledOrder::class);
     }
 }

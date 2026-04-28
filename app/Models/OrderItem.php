@@ -10,7 +10,10 @@ class OrderItem extends Model
         'order_id',
         'product_id',
         'quantity',
-        'price'
+        'price',
+        'size',
+        'sugar',
+        'ice'
     ];
 
     // thuộc order
