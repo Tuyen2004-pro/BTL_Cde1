@@ -14,7 +14,7 @@ use App\Http\Controllers\admin\UserController;
 
 // STAFF
 use App\Http\Controllers\Staff\OrderController as StaffOrderController;
-use App\Http\Controllers\Staff\TableController as StaffTableController; // ✅ THÊM
+use App\Http\Controllers\Staff\TableController as StaffTableController;
 
 // SHIPPER
 use App\Http\Controllers\Shipper\OrderController as ShipperOrderController;
@@ -88,10 +88,20 @@ Route::middleware(['auth', 'role:staff'])
         Route::get('orders/create', [StaffOrderController::class, 'create'])->name('orders.create');
         Route::post('orders/store', [StaffOrderController::class, 'store'])->name('orders.store');
         Route::get('orders/{id}', [StaffOrderController::class, 'show'])->name('orders.show');
+
+        Route::get('orders/{id}/edit', [StaffOrderController::class, 'edit'])->name('orders.edit');
+        Route::put('orders/{id}', [StaffOrderController::class, 'update'])->name('orders.update');
+
         Route::post('orders/{id}/pay', [StaffOrderController::class, 'pay'])->name('orders.pay');
+
+        // ❌ KHÔNG DÙNG NỮA (có thể giữ lại nhưng đã bị chặn trong controller)
         Route::delete('orders/{id}', [StaffOrderController::class, 'destroy'])->name('orders.destroy');
 
-        // ===== TABLES (🔥 FIX LỖI CHÍNH) =====
+        // ✅ THÊM ROUTE HỦY ĐƠN (QUAN TRỌNG)
+        Route::post('orders/{id}/cancel', [StaffOrderController::class, 'cancel'])
+            ->name('orders.cancel');
+
+        // ===== TABLES =====
         Route::get('tables', [StaffTableController::class, 'index'])->name('tables.index');
     });
 

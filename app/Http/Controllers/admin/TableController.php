@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\admin;
+namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Table;
@@ -10,7 +10,9 @@ class TableController extends Controller
 {
     public function index()
     {
-        $tables = Table::latest()->paginate(10);
+        // load kèm orders để check trạng thái bàn
+        $tables = Table::with('orders')->latest()->paginate(10);
+
         return view('admin.tables.index', compact('tables'));
     }
 
@@ -22,8 +24,8 @@ class TableController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'name' => 'required|string|max:255',
-            'status' => 'required|in:available,occupied'
+            'name' => 'required|string|max:255|unique:tables,name',
+            'capacity' => 'nullable|integer|min:1|max:20'
         ]);
 
         Table::create($data);
@@ -35,6 +37,7 @@ class TableController extends Controller
     public function edit($id)
     {
         $table = Table::findOrFail($id);
+
         return view('admin.tables.edit', compact('table'));
     }
 
@@ -43,8 +46,8 @@ class TableController extends Controller
         $table = Table::findOrFail($id);
 
         $data = $request->validate([
-            'name' => 'required|string|max:255',
-            'status' => 'required|in:available,occupied'
+            'name' => 'required|string|max:255|unique:tables,name,' . $id,
+            'capacity' => 'nullable|integer|min:1|max:20'
         ]);
 
         $table->update($data);
@@ -55,7 +58,15 @@ class TableController extends Controller
 
     public function destroy($id)
     {
-        Table::destroy($id);
+        $table = Table::findOrFail($id);
+
+        // (optional) không cho xoá nếu đang có order
+        if ($table->orders()->where('status', 'pending')->exists()) {
+            return redirect()->back()
+                ->with('error', 'Không thể xoá bàn đang sử dụng');
+        }
+
+        $table->delete();
 
         return redirect()->route('admin.tables.index')
             ->with('success', 'Xoá thành công');

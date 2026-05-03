@@ -2,46 +2,104 @@
 
 @section('content')
 
-<h3>Chi tiết đơn hàng #{{ $order->id }}</h3>
+<div class="container">
 
-<p><b>Khách:</b> {{ $order->user->name }}</p>
-<p><b>Địa chỉ:</b> {{ $order->address }}</p>
-<p><b>Trạng thái:</b> {{ $order->status }}</p>
+    <h3 class="mb-3">🧾 Chi tiết đơn hàng #{{ $order->id }}</h3>
 
-<hr>
+    {{-- THÔNG TIN ĐƠN --}}
+    <div class="card mb-3">
+        <div class="card-body">
 
-<h5>Sản phẩm:</h5>
+            <p><b>👤 Nhân viên:</b> {{ $order->user->name ?? 'N/A' }}</p>
 
-<table class="table table-bordered">
-    <tr>
-        <th>Tên</th>
-        <th>Số lượng</th>
-        <th>Giá</th>
-    </tr>
+            <p><b>🪑 Bàn:</b> {{ $order->table->name ?? 'N/A' }}</p>
 
-    @foreach($order->details as $d)
-    <tr>
-        <td>{{ $d->product->name }}</td>
-        <td>{{ $d->quantity }}</td>
-        <td>{{ number_format($d->price) }}</td>
-    </tr>
-    @endforeach
+            <p><b>⏰ Thời gian:</b> {{ $order->created_at }}</p>
 
-</table>
+            <p>
+                <b>📌 Trạng thái:</b>
+                @if($order->status == 'pending')
+                <span class="badge bg-warning text-dark">Đang mở</span>
+                @elseif($order->status == 'paid')
+                <span class="badge bg-success">Đã thanh toán</span>
+                @elseif($order->status == 'cancelled')
+                <span class="badge bg-danger">Đã huỷ</span>
+                @endif
+            </p>
 
----
+            {{-- HIỂN THỊ LÝ DO HUỶ --}}
+            @if($order->status == 'cancelled' && $order->cancelled)
+            <div style="color:red">
+                Lý do huỷ: {{ $order->cancelled->reason }}
+            </div>
+            @endif
 
-<form method="POST" action="{{ route('admin.orders.update',$order->id) }}">
-    @csrf @method('PUT')
+        </div>
+    </div>
 
-    <select name="status" class="form-control mb-2">
-        <option value="confirmed">Xác nhận</option>
-        <option value="shipping">Đang giao</option>
-        <option value="completed">Hoàn thành</option>
-        <option value="cancelled">Hủy</option>
-    </select>
+    {{-- DANH SÁCH MÓN --}}
+    <h5>🍵 Danh sách món</h5>
 
-    <button class="btn btn-success">Cập nhật</button>
-</form>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Tên món</th>
+                <th>Size</th>
+                <th>Đường</th>
+                <th>Đá</th>
+                <th>Số lượng</th>
+                <th>Giá</th>
+                <th>Thành tiền</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @php $total = 0; @endphp
+
+            @foreach($order->items as $item)
+
+            @php
+            $subtotal = $item->quantity * $item->price;
+            $total += $subtotal;
+            @endphp
+
+            <tr>
+                <td>{{ $item->product->name }}</td>
+
+                <td>{{ $item->size ?? '-' }}</td>
+
+                <td>
+                    {{ $item->sugar ? $item->sugar  : '-' }}
+                </td>
+
+                <td>
+                    {{ $item->ice ? $item->ice  : '-' }}
+                </td>
+
+                <td>{{ $item->quantity }}</td>
+
+                <td>{{ number_format($item->price) }} đ</td>
+
+                <td>{{ number_format($subtotal) }} đ</td>
+            </tr>
+
+            @endforeach
+
+        </tbody>
+
+        <tfoot>
+            <tr>
+                <th colspan="6" class="text-end">Tổng tiền</th>
+                <th>{{ number_format($total) }} đ</th>
+            </tr>
+        </tfoot>
+
+    </table>
+
+    <a href="{{ route('admin.orders.index') }}" class="btn btn-secondary">
+        ← Quay lại
+    </a>
+
+</div>
 
 @endsection

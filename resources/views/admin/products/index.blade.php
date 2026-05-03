@@ -10,27 +10,40 @@
     <tr>
         <th>Ảnh</th>
         <th>Tên</th>
-        <th>Giá</th>
+        <th>Size & Giá</th>
         <th>Danh mục</th>
-        <th></th>
+        <th>Thao tác</th>
     </tr>
 
     @foreach($products as $p)
     <tr>
-        <td><img src="/storage/{{ $p->image }}" width="60"></td>
+        <td>
+            <img src="{{ asset('storage/' . $p->image) }}" width="80">
+        </td>
+
         <td>{{ $p->name }}</td>
-        <td>{{ number_format($p->price) }}</td>
+
+        <td>
+            @foreach($p->sizes as $s)
+            <div>
+                {{ $s->size }} - {{ number_format($s->price) }} đ
+            </div>
+            @endforeach
+        </td>
+
         <td>{{ $p->category->name }}</td>
+
         <td>
             <a href="{{ route('admin.products.edit',$p->id) }}" class="btn btn-warning btn-sm">Sửa</a>
-            <form method="POST" action="{{ route('admin.products.destroy',$p->id) }}" style="display:inline">
-                @csrf @method('DELETE')
+
+            <form action="{{ route('admin.products.destroy',$p->id) }}" method="POST" style="display:inline">
+                @csrf
+                @method('DELETE')
                 <button class="btn btn-danger btn-sm">Xóa</button>
             </form>
         </td>
     </tr>
     @endforeach
-
 </table>
 
 @endsection

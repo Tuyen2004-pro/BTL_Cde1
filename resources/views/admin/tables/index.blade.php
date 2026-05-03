@@ -2,107 +2,119 @@
 
 @section('title', 'Quản lý bàn')
 
-@section('breadcrumb')
-<li class="breadcrumb-item active">Bàn</li>
-@endsection
-
 @section('content')
 
-<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
-    <div></div>
-    <a href="{{ route('admin.tables.create') }}" class="btn-espresso">
-        <i class="bi bi-plus-lg"></i> Thêm bàn mới
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold">Quản lý bàn</h4>
+
+    <a href="{{ route('admin.tables.create') }}" class="btn btn-primary">
+        <i class="bi bi-plus-lg"></i> Thêm bàn
     </a>
 </div>
 
 @if($tables->isEmpty())
-<div class="card-cafe">
-    <div class="empty-state">
-        <i class="bi bi-layout-three-columns"></i>
-        <p>Chưa có bàn nào. <a href="{{ route('admin.tables.create') }}" style="color:var(--caramel)">Thêm ngay</a></p>
-    </div>
+<div class="text-center p-5 bg-white shadow-sm rounded">
+    <i class="bi bi-layout-three-columns fs-1 text-muted"></i>
+    <p class="mt-3">Chưa có bàn nào</p>
 </div>
 @else
+
 <div class="row g-3">
+
     @foreach($tables as $table)
     @php
-    $status = $table->status ?? 'available';
-    $isOccupied = $status === 'occupied';
+    $status = $table->status ?? 'empty';
+    $isOccupied = in_array($status, ['using','occupied']);
     @endphp
+
     <div class="col-md-4 col-lg-3">
-        <div <div @style([ 'background'=> '#fff',
-            'border-radius' => '14px',
-            'padding' => '22px',
-            'box-shadow' => 'var(--shadow)',
-            'border' => $isOccupied ? '2px solid #fcd34d' : '2px solid rgba(26,14,5,.06)',
-            'transition' => 'all .2s',
-            'position' => 'relative',
-            'overflow' => 'hidden'
-            ])>
-            <div @style([ 'position'=> 'absolute',
-                'top' => '0',
-                'right' => '0',
-                'width' => '60px',
-                'height' => '60px',
-                'border-radius' => '0 14px 0 60px',
-                'background' => $isOccupied ? 'rgba(252,211,77,.2)' : 'rgba(16,185,129,.1)'
-                ])>
+
+        <div class="table-card">
+
+            <div class="table-icon">🪑</div>
+
+            <div class="table-name">
+                {{ $table->name }}
             </div>
+
+            <div class="table-capacity">
+                @if($table->capacity)
+                {{ $table->capacity }} người
+                @else
+                Chưa rõ sức chứa
+                @endif
+            </div>
+
+            <div class="mb-3">
+                @if($isOccupied)
+                <span class="badge bg-danger">Đang sử dụng</span>
+                @else
+                <span class="badge bg-success">Trống</span>
+                @endif
+            </div>
+
+            <div class="d-flex gap-2">
+                <a href="{{ route('admin.tables.edit',$table->id) }}" class="btn btn-sm btn-outline-primary w-100">
+                    Sửa
+                </a>
+
+                <form id="del-{{ $table->id }}" method="POST" action="{{ route('admin.tables.destroy',$table->id) }}">
+                    @csrf
+                    @method('DELETE')
+                </form>
+
+                <button onclick="confirmDelete('del-{{ $table->id }}')" class="btn btn-sm btn-danger">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </div>
+
         </div>
 
-        <div style="font-size:2.5rem;line-height:1;margin-bottom:12px">🪑</div>
-        <div
-            style="font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:700;color:var(--espresso);margin-bottom:4px">
-            {{ $table->name }}
-        </div>
-
-        <div style="font-size:.8rem;color:rgba(26,14,5,.45);margin-bottom:12px">
-            @if($table->capacity)
-            <i class="bi bi-people me-1"></i>{{ $table->capacity }} người
-            @else
-            <i class="bi bi-dash-circle me-1"></i>Chưa rõ sức chứa
-            @endif
-        </div>
-
-        <div style="margin-bottom:16px">
-            @if($isOccupied)
-            <span class="badge-cafe badge-occupied">🔴 Đang sử dụng</span>
-            @else
-            <span class="badge-cafe badge-available">🟢 Trống</span>
-            @endif
-        </div>
-
-        <div style="display:flex;gap:8px">
-            <a href="{{ route('admin.tables.edit', $table->id) }}" class="btn-outline-cafe"
-                style="flex:1;justify-content:center;padding:7px 10px;font-size:.8rem">
-                <i class="bi bi-pencil"></i> Sửa
-            </a>
-            <form id="del-tbl-{{ $table->id }}" action="{{ route('admin.tables.destroy', $table->id) }}" method="POST">
-                @csrf @method('DELETE')
-            </form>
-            <button onclick="confirmDelete('del-tbl-{{ $table->id }}')" class="btn-danger-cafe"
-                style="font-size:.8rem;padding:7px 12px">
-                <i class="bi bi-trash"></i>
-            </button>
-        </div>
     </div>
+    @endforeach
+
 </div>
-@endforeach
+
+{{-- STATS --}}
+<div class="mt-4 p-3 bg-white rounded shadow-sm d-flex gap-4 flex-wrap">
+    <span>🟢 Trống: {{ $tables->whereIn('status',['empty',null])->count() }}</span>
+    <span>🔴 Đang dùng: {{ $tables->whereIn('status',['using','occupied'])->count() }}</span>
+    <span>Tổng: {{ $tables->count() }}</span>
 </div>
+
 @endif
 
-<div class="card-cafe" style="margin-top:24px">
-    <div class="card-body-cafe" style="display:flex;gap:24px;flex-wrap:wrap;align-items:center">
-        <span style="font-size:.82rem;font-weight:600;color:rgba(26,14,5,.5)">THỐNG KÊ:</span>
-        <span class="badge-cafe badge-available" style="font-size:.8rem">
-            🟢 Trống: {{ $tables->where('status', 'available')->count() + $tables->whereNull('status')->count() }}
-        </span>
-        <span class="badge-cafe badge-occupied" style="font-size:.8rem">
-            🔴 Đang dùng: {{ $tables->where('status', 'occupied')->count() }}
-        </span>
-        <span style="font-size:.82rem;color:rgba(26,14,5,.4)">
-            Tổng: {{ $tables->count() }} bàn
-        </span>
-    </div>
-</div>
+
+{{-- STYLE --}}
+<style>
+    .table-card {
+        background: #fff;
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        text-align: center;
+        transition: 0.3s;
+    }
+
+    .table-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .table-icon {
+        font-size: 40px;
+        margin-bottom: 10px;
+    }
+
+    .table-name {
+        font-weight: bold;
+        font-size: 18px;
+    }
+
+    .table-capacity {
+        font-size: 13px;
+        color: #888;
+        margin-bottom: 10px;
+    }
+</style>
+
 @endsection

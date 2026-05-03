@@ -5,13 +5,14 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\Category;
+use App\Models\ProductSize;
 use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
     public function index()
     {
-        $products = Product::with('category')->latest()->get();
+        $products = Product::with(['category', 'sizes'])->latest()->get();
         return view('admin.products.index', compact('products'));
     }
 
@@ -25,17 +26,30 @@ class ProductController extends Controller
     {
         $request->validate([
             'name' => 'required',
-            'price' => 'required|numeric|min:1',
             'category_id' => 'required'
         ]);
 
         $data = $request->all();
 
+        // upload ảnh
         if ($request->hasFile('image')) {
             $data['image'] = $request->file('image')->store('products', 'public');
         }
 
-        Product::create($data);
+        // tạo product
+        $product = Product::create($data);
+
+        // 🔥 FIX: LUÔN LƯU SIZE (KỂ CẢ = 0)
+        if ($request->sizes) {
+            foreach ($request->sizes as $size => $price) {
+
+                ProductSize::create([
+                    'product_id' => $product->id,
+                    'size' => $size,
+                    'price' => ($price === null || $price === '') ? 0 : $price,
+                ]);
+            }
+        }
 
         return redirect()->route('admin.products.index')
             ->with('success', 'Thêm sản phẩm thành công');
@@ -43,7 +57,7 @@ class ProductController extends Controller
 
     public function edit($id)
     {
-        $product = Product::findOrFail($id);
+        $product = Product::with('sizes')->findOrFail($id);
         $categories = Category::all();
 
         return view('admin.products.edit', compact('product', 'categories'));
@@ -53,7 +67,6 @@ class ProductController extends Controller
     {
         $request->validate([
             'name' => 'required',
-            'price' => 'required|numeric|min:1',
             'category_id' => 'required'
         ]);
 
@@ -65,6 +78,21 @@ class ProductController extends Controller
         }
 
         $product->update($data);
+
+        // 🔥 XÓA SIZE CŨ
+        ProductSize::where('product_id', $product->id)->delete();
+
+        // 🔥 FIX: LƯU LẠI SIZE (KỂ CẢ = 0)
+        if ($request->sizes) {
+            foreach ($request->sizes as $size => $price) {
+
+                ProductSize::create([
+                    'product_id' => $product->id,
+                    'size' => $size,
+                    'price' => ($price === null || $price === '') ? 0 : $price,
+                ]);
+            }
+        }
 
         return redirect()->route('admin.products.index')
             ->with('success', 'Cập nhật thành công');

@@ -93,15 +93,41 @@ $todayRevenue = $myOrders->where('created_at', '>=', today())->where('status', '
 
         <!-- Table status -->
         @php $tables = \App\Models\Table::all(); @endphp
+
         <div class="card-cafe">
             <div class="card-header-cafe">
-                <h5><i class="bi bi-layout-three-columns me-2" style="color:var(--caramel)"></i>Trạng thái bàn</h5>
+                <h5>
+                    <i class="bi bi-layout-three-columns me-2" style="color:var(--caramel)"></i>
+                    Trạng thái bàn
+                </h5>
             </div>
+
             <div class="card-body-cafe">
-                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+                <div class="table-grid">
+
                     @foreach($tables as $table)
-                    @php $occ = $table->status === 'occupied'; @endphp
+
+                    @php
+                    $status = $table->status ?? 'empty';
+                    $isUsing = $status === 'using';
+                    @endphp
+
+                    <div class="table-box {{ $isUsing ? 'using' : 'empty' }}">
+
+                        <div class="table-icon">🪑</div>
+
+                        <div class="table-name">
+                            {{ $table->name }}
+                        </div>
+
+                        <div class="table-status">
+                            {{ $isUsing ? 'Đang dùng' : 'Trống' }}
+                        </div>
+
+                    </div>
+
                     @endforeach
+
                 </div>
             </div>
         </div>
@@ -179,5 +205,48 @@ $todayRevenue = $myOrders->where('created_at', '>=', today())->where('status', '
         </div>
     </div>
 </div>
+<style>
+    .table-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+    }
 
+    .table-box {
+        padding: 10px;
+        border-radius: 10px;
+        text-align: center;
+        font-size: 13px;
+        border: 1px solid;
+        transition: 0.2s;
+    }
+
+    .table-box:hover {
+        transform: scale(1.05);
+    }
+
+    .table-box.empty {
+        background: #dcfce7;
+        color: #166534;
+        border-color: #bbf7d0;
+    }
+
+    .table-box.using {
+        background: #fee2e2;
+        color: #b91c1c;
+        border-color: #fecaca;
+    }
+
+    .table-icon {
+        font-size: 18px;
+    }
+
+    .table-name {
+        font-weight: 600;
+    }
+
+    .table-status {
+        font-size: 11px;
+    }
+</style>
 @endsection

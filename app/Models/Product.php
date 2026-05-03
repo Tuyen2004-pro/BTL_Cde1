@@ -26,4 +26,10 @@ class Product extends Model
     {
         return $this->hasMany(OrderItem::class);
     }
+
+    // ✅ THÊM CÁI NÀY (QUAN TRỌNG)
+    public function sizes()
+    {
+        return $this->hasMany(ProductSize::class);
+    }
 }

@@ -13,17 +13,21 @@
 
 @section('content')
 <div class="row g-4">
+
     <!-- Order Info -->
     <div class="col-lg-8">
         <div class="card-cafe" style="margin-bottom:20px">
+
             <div class="card-header-cafe">
                 <div>
                     <h5 style="margin-bottom:4px">
                         <i class="bi bi-receipt me-2" style="color:var(--caramel)"></i>
                         Đơn hàng #{{ $order->id }}
                     </h5>
+
                     <div style="font-size:.78rem;color:rgba(26,14,5,.4)">
-                        <i class="bi bi-clock me-1"></i>{{ $order->created_at->format('H:i — d/m/Y') }}
+                        <i class="bi bi-clock me-1"></i>
+                        {{ $order->created_at->format('H:i — d/m/Y') }}
                     </div>
                 </div>
 
@@ -44,6 +48,14 @@
                 </div>
             </div>
 
+            <!-- 👉 HIỂN THỊ LÝ DO HỦY -->
+            @if($order->status === 'cancelled')
+            <div style="margin:12px;padding:12px;background:#ffecec;border-radius:10px;font-size:.85rem">
+                <strong>❗ Lý do hủy:</strong><br>
+                {{ $order->cancelled->reason }}
+            </div>
+            @endif
+
             <div class="card-body-cafe" style="padding:0">
                 <table class="table-cafe">
                     <thead>
@@ -54,11 +66,13 @@
                             <th style="text-align:right">Thành tiền</th>
                         </tr>
                     </thead>
+
                     <tbody>
                         @foreach($order->items as $item)
                         <tr>
                             <td>
                                 <div style="display:flex;align-items:center;gap:12px">
+
                                     @if($item->product?->image)
                                     <img src="{{ asset('storage/' . $item->product->image) }}"
                                         style="width:40px;height:40px;border-radius:8px;object-fit:cover">
@@ -79,6 +93,29 @@
                                             {{ $item->product->category->name }}
                                         </div>
                                         @endif
+
+                                        <div style="font-size:.75rem;color:rgba(26,14,5,.5);margin-top:4px">
+
+                                            @if($item->size)
+                                            <span style="margin-right:8px">
+                                                📏 Size: <strong>{{ $item->size }}</strong>
+                                            </span>
+                                            @endif
+
+                                            @if($item->sugar)
+                                            <span style="margin-right:8px">
+                                                🍬 Đường: {{ $item->sugar }}
+                                            </span>
+                                            @endif
+
+                                            @if($item->ice)
+                                            <span>
+                                                ❄️ Đá: {{ $item->ice }}
+                                            </span>
+                                            @endif
+
+                                        </div>
+
                                     </div>
                                 </div>
                             </td>
@@ -122,10 +159,12 @@
         <!-- Actions -->
         <div style="display:flex;gap:12px;flex-wrap:wrap">
 
+            <!-- BACK -->
             <a href="{{ route('staff.orders.index') }}" class="btn-outline-cafe">
                 <i class="bi bi-arrow-left"></i> Quay lại
             </a>
 
+            <!-- PAY -->
             @if($order->status === 'pending')
             <form action="{{ route('staff.orders.pay', $order->id) }}" method="POST">
                 @csrf
@@ -135,18 +174,21 @@
             </form>
             @endif
 
-            <!-- ❗ FIX ROUTE -->
-            <form id="del-ord-show-{{ $order->id }}" action="{{ route('staff.orders.destroy', $order->id) }}"
-                method="POST">
-                @csrf
-                @method('DELETE')
-            </form>
+            <!-- EDIT -->
+            <a href="{{ route('staff.orders.edit', $order->id) }}"
+                class="btn-espresso {{ $order->status !== 'pending' ? 'disabled-link' : '' }}" @if($order->status !==
+                'pending') onclick="return false;" @endif>
+                <i class="bi bi-pencil-square"></i> Sửa đơn
+            </a>
 
-            <button onclick="confirmDelete('del-ord-show-{{ $order->id }}')" class="btn-danger-cafe"
-                style="padding:9px 18px">
-                <i class="bi bi-trash"></i> Xoá đơn
+            <!-- CANCEL -->
+            @if($order->status === 'pending')
+            <button class="btn-danger-cafe" data-bs-toggle="modal" data-bs-target="#cancelModal{{ $order->id }}">
+                <i class="bi bi-x-circle"></i> Hủy đơn
             </button>
+            @endif
 
+            <!-- PRINT -->
             <button onclick="window.print()" class="btn-outline-cafe">
                 <i class="bi bi-printer"></i> In đơn
             </button>
@@ -154,8 +196,9 @@
         </div>
     </div>
 
-    <!-- Sidebar info -->
+    <!-- Sidebar -->
     <div class="col-lg-4">
+
         <div class="card-cafe" style="margin-bottom:16px">
             <div class="card-header-cafe">
                 <h5 style="font-size:.95rem">
@@ -200,38 +243,37 @@
             </div>
         </div>
 
-        @if($order->delivery)
-        <div class="card-cafe">
-            <div class="card-header-cafe">
-                <h5 style="font-size:.95rem">
-                    <i class="bi bi-truck me-2" style="color:var(--caramel)"></i>
-                    Thông tin giao hàng
-                </h5>
-            </div>
-
-            <div class="card-body-cafe">
-                <div style="font-size:.875rem;line-height:1.8">
-                    <div>
-                        <span>Shipper:</span>
-                        <strong>{{ $order->delivery->shipper?->name }}</strong>
-                    </div>
-
-                    <div>
-                        <span>Địa chỉ:</span>
-                        <strong>{{ $order->delivery->address }}</strong>
-                    </div>
-
-                    <div>
-                        <span>Trạng thái:</span>
-                        <span class="badge-cafe badge-active">
-                            {{ $order->delivery->status }}
-                        </span>
-                    </div>
-                </div>
-            </div>
-        </div>
-        @endif
-
     </div>
 </div>
+
+<!-- MODAL HỦY -->
+<div class="modal fade" id="cancelModal{{ $order->id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content" style="border-radius:16px">
+
+            <form action="{{ route('staff.orders.cancel', $order->id) }}" method="POST">
+                @csrf
+
+                <div class="modal-header">
+                    <h5 class="modal-title">❌ Hủy đơn #{{ $order->id }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <label style="font-weight:600;margin-bottom:6px">Lý do hủy</label>
+                    <textarea name="reason" class="form-control" rows="4" placeholder="Nhập lý do hủy..."
+                        required></textarea>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-outline-cafe" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn-danger-cafe">Xác nhận hủy</button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+
 @endsection

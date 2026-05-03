@@ -10,13 +10,14 @@
         <th>Khách</th>
         <th>Tiền</th>
         <th>Trạng thái</th>
-        <th></th>
+        <th>Thao tác</th>
     </tr>
 
     @foreach($orders as $o)
     <tr>
         <td>{{ $o->id }}</td>
         <td>{{ $o->user->name }}</td>
+
         <td>{{ number_format($o->total_price) }}</td>
         <td>{{ $o->status }}</td>
         <td>
